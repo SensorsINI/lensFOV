@@ -16,7 +16,7 @@ This repo is a sibling of `jaer` (`Dropbox/GitHub/SensorsINI/jaer` and `.../lens
 ## Publish
 
 1. On GitHub: **SensorsINI → New repository → `lensFOV` → Public**. Create it **empty** (no README, no `.gitignore`).
-2. Locally: `git push -u origin master`
+2. Locally: `git push -u origin main`
 3. In **this** repo: **Settings → Pages → Source: GitHub Actions**. Do **not** click **Configure** on the suggested Jekyll/Static HTML templates (this repo already has `.github/workflows/pages.yml`).
 4. Wait for the Actions run to go green. The calculator is at `https://sensorsini.github.io/lensFOV/`.
 
