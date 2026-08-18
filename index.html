@@ -128,8 +128,9 @@
   <main>
     <h1>Event-camera field of view</h1>
     <p class="lede">
-      Estimate horizontal and vertical FOV from pixel pitch, array size, and lens focal length.
-      Presets match jAER chip classes. Results use jAER <code>EngineeringFormat</code> (SI prefixes).
+      Estimate horizontal and vertical FOV from pixel pitch, array size, lens focal length,
+      and distance from the camera. Presets match jAER chip classes.
+      Results use jAER <code>EngineeringFormat</code> (SI prefixes).
     </p>
 
     <section class="card">
@@ -160,6 +161,10 @@
           <label for="sizeY">Array height (pixels)</label>
           <input id="sizeY" type="number" min="1" step="1">
         </div>
+        <div class="field">
+          <label for="distM">Distance from camera (m)</label>
+          <input id="distM" type="number" min="0" step="0.1" value="1">
+        </div>
       </div>
     </section>
 
@@ -172,6 +177,8 @@
         <code>FOV = 2 atan(sensor_mm / (2 f_mm))</code>
         &nbsp;·&nbsp;
         <code>deg/pixel = atan(pitch_mm / f_mm)</code>
+        &nbsp;·&nbsp;
+        <code>scene_m = D_m × sensor_mm / f_mm</code>
       </p>
     </section>
 
@@ -236,6 +243,7 @@
     var pitchEl = document.getElementById('pitchUm');
     var sizeXEl = document.getElementById('sizeX');
     var sizeYEl = document.getElementById('sizeY');
+    var distEl = document.getElementById('distM');
     var resultsEl = document.getElementById('results');
 
     CAMERAS.forEach(function (c) {
@@ -305,7 +313,8 @@
         focalMm: focalEl.value,
         pitchUm: pitchEl.value,
         sizeX: sizeXEl.value,
-        sizeY: sizeYEl.value
+        sizeY: sizeYEl.value,
+        distM: distEl.value
       });
       try {
         localStorage.setItem(STORAGE_KEY, state);
@@ -357,6 +366,7 @@
       var pitchUm = parseFloat(pitchEl.value);
       var sizeX = parseFloat(sizeXEl.value);
       var sizeY = parseFloat(sizeYEl.value);
+      var distM = parseFloat(distEl.value);
 
       if (!(fMm > 0) || !(pitchUm > 0) || !(sizeX > 0) || !(sizeY > 0)) {
         resultsEl.innerHTML = '<p class="error">Enter positive focal length, pitch, and array size.</p>';
@@ -372,12 +382,21 @@
       var fovHdeg = fovHrad * 180 / Math.PI;
       var ifovDeg = ifovRad * 180 / Math.PI;
 
-      resultsEl.innerHTML =
+      var html =
         metric('FOV width', eng.format(fovWdeg), 'deg', eng.format(fovWrad), 'rad') +
-        metric('FOV height', eng.format(fovHdeg), 'deg', eng.format(fovHrad), 'rad') +
+        metric('FOV height', eng.format(fovHdeg), 'deg', eng.format(fovHrad), 'rad');
+      if (distM > 0) {
+        var sceneW = distM * (wMm / fMm);
+        var sceneH = distM * (hMm / fMm);
+        html +=
+          metric('FOV width at distance', eng.format(sceneW), 'm') +
+          metric('FOV height at distance', eng.format(sceneH), 'm');
+      }
+      html +=
         metric('Angle per pixel', eng.format(ifovDeg), 'deg/pixel', eng.format(ifovRad), 'rad/pixel') +
         metric('Sensor width', eng.format(wMm), 'mm') +
         metric('Sensor height', eng.format(hMm), 'mm');
+      resultsEl.innerHTML = html;
 
       saveState();
     }
@@ -395,6 +414,7 @@
       syncFocalPresetFromInput();
       compute();
     });
+    distEl.addEventListener('input', compute);
     [pitchEl, sizeXEl, sizeYEl].forEach(function (el) {
       el.addEventListener('input', function () {
         markCustomIfEdited();
@@ -411,6 +431,7 @@
       if (saved.sizeX) sizeXEl.value = saved.sizeX;
       if (saved.sizeY) sizeYEl.value = saved.sizeY;
       if (saved.focalMm) focalEl.value = saved.focalMm;
+      if (saved.distM) distEl.value = saved.distM;
       markCustomIfEdited();
       syncFocalPresetFromInput();
       restoring = false;
